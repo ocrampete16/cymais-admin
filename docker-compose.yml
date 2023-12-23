@@ -124,6 +124,8 @@ services:
             MYSQL_DATABASE: database
             MYSQL_ALLOW_EMPTY_PASSWORD: 1
             MYSQL_ROOT_HOST: '%'
+        volumes:
+            - './keycloak-dump.sql:/docker-entrypoint-initdb.d/keycloak-dump.sql'
         networks:
             - sail
         healthcheck:
