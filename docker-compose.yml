@@ -100,6 +100,36 @@ services:
             - '/dev/shm:/dev/shm'
         networks:
             - sail
+    keycloak:
+        image: quay.io/keycloak/keycloak:23.0.3-0
+        command: start-dev
+        environment:
+            KEYCLOAK_ADMIN: username
+            KEYCLOAK_ADMIN_PASSWORD: password
+            KC_DB: mysql
+            KC_DB_URL_HOST: keycloak-mysql
+            KC_DB_URL_DATABASE: database
+            KC_DB_USERNAME: root
+        depends_on:
+            - keycloak-mysql
+        ports:
+            - '8080:8080'
+        networks:
+            - sail
+    keycloak-mysql:
+        image: mysql/mysql-server:8.0
+        ports:
+            - '3307:3306'
+        environment:
+            MYSQL_DATABASE: database
+            MYSQL_ALLOW_EMPTY_PASSWORD: 1
+            MYSQL_ROOT_HOST: '%'
+        networks:
+            - sail
+        healthcheck:
+            test: [CMD, mysqladmin, ping]
+            retries: 3
+            timeout: 5s
 networks:
     sail:
         driver: bridge
