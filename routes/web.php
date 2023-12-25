@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Facades\Socialite;
@@ -52,6 +53,22 @@ Route::prefix('openid-connect')->name('openid_connect.')->group(function () {
     });
 
     Route::name('debug')->get('/debug', function () {
-        dd(Socialite::driver('keycloak')->userFromToken(Auth::user()->access_token));
+        try {
+            $user = Socialite::driver('keycloak')->userFromToken(Auth::user()->access_token);
+        } catch (ClientException $exception) {
+            if ($exception->getResponse()->getStatusCode() !== 401) {
+                throw $exception;
+            }
+
+            $token = Socialite::driver('keycloak')->refreshToken(Auth::user()->refresh_token);
+            Auth::user()->update([
+                'access_token' => $token->token,
+                'refresh_token' => $token->refreshToken,
+            ]);
+
+            $user = Socialite::driver('keycloak')->userFromToken($token->token);
+        }
+
+        dd($user);
     });
 });
