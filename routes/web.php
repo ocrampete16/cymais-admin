@@ -42,6 +42,7 @@ Route::prefix('openid-connect')->name('openid_connect.')->group(function () {
     Route::name('callback')->get('/callback', function () {
         $keycloakUser = Socialite::driver('keycloak')->user();
 
+        /** @var User $user */
         $user = User::updateOrCreate([
             'keycloak_id' => $keycloakUser->id,
         ], [
@@ -50,19 +51,26 @@ Route::prefix('openid-connect')->name('openid_connect.')->group(function () {
             'refresh_token' => $keycloakUser->refreshToken,
         ]);
 
-        // TODO: remove roles that the user doesn't have anymore!
         /** @var KeycloakUserRoleExtractor $extractor */
         $extractor = app()->get(KeycloakUserRoleExtractor::class);
         $roleNames = $extractor->extractRoles($keycloakUser);
 
-        foreach ($roleNames as $roleName) {
-            try {
-                $role = Role::findByName($roleName);
-            } catch (RoleDoesNotExist $exception) {
-                continue;
-            }
+        $keycloakRoles = collect($roleNames)
+            ->map(fn (string $roleName) => Role::where('name', $roleName)->first())
+            ->filter();
 
-            $user->assignRole($role);
+        // Remove all roles that are assigned to the user locally but not on Keycloak
+        foreach ($user->roles()->get() as $localRole) {
+            if ($keycloakRoles->doesntContain(fn (Role $role, $key) => $role->is($localRole))) {
+                $user->removeRole($localRole);
+            }
+        }
+
+        // Add all roles that are assigned to the user on Keycloak but not locally
+        foreach ($keycloakRoles as $keycloakRole) {
+            if (!$user->hasRole($keycloakRole)) {
+                $user->assignRole($keycloakRole);
+            }
         }
 
         Auth::login($user);
