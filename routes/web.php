@@ -29,6 +29,10 @@ Route::name('login')->get('/login', function () {
 });
 
 Route::name('logout')->get('/logout', function () {
+    Auth::user()->update([
+        'access_token' => null,
+        'refresh_token' => null,
+    ]);
     Auth::logout();
 
     return redirect('/');
