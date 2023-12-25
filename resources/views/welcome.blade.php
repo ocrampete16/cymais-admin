@@ -5,6 +5,9 @@
             <ul>
                 @auth
                     <li>
+                        <a href="{{ route('openid_connect.debug') }}">OpenID Connect Debug</a>
+                    </li>
+                    <li>
                         <a href="{{ route('logout') }}">Log out</a>
                     </li>
                     @if(Auth::user()->hasPermissionTo(Permission::ADD_USER))

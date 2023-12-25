@@ -50,4 +50,8 @@ Route::prefix('openid-connect')->name('openid_connect.')->group(function () {
 
         return redirect('/');
     });
+
+    Route::name('debug')->get('/debug', function () {
+        dd(Socialite::driver('keycloak')->userFromToken(Auth::user()->access_token));
+    });
 });
