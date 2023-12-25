@@ -17,7 +17,7 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
-    protected $fillable = [];
+    protected $fillable = ['keycloak_id', 'username', 'access_token', 'refresh_token'];
 
     /**
      * The attributes that should be hidden for serialization.

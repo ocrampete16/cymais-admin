@@ -20,14 +20,34 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::name('login')->get('/login', function () {
+    return view('login');
+});
+
+Route::name('logout')->get('/logout', function () {
+    Auth::logout();
+
+    return redirect('/');
+});
+
 Route::prefix('openid-connect')->name('openid_connect.')->group(function () {
     Route::name('redirect')->get('/redirect', function () {
         return Socialite::driver('keycloak')->redirect();
     });
 
     Route::name('callback')->get('/callback', function () {
-        $user = Socialite::driver('keycloak')->user();
+        $keycloakUser = Socialite::driver('keycloak')->user();
 
-        dd($user);
+        $user = User::updateOrCreate([
+            'keycloak_id' => $keycloakUser->id,
+        ], [
+            'username' => $keycloakUser->nickname,
+            'access_token' => $keycloakUser->token,
+            'refresh_token' => $keycloakUser->refreshToken,
+        ]);
+
+        Auth::login($user);
+
+        return redirect('/');
     });
 });
