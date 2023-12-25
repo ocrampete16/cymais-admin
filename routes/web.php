@@ -1,10 +1,13 @@
 <?php
 
+use App\KeycloakUserRoleExtractor;
 use App\Models\User;
 use GuzzleHttp\Exception\ClientException;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Laravel\Socialite\Facades\Socialite;
+use Spatie\Permission\Exceptions\RoleDoesNotExist;
+use Spatie\Permission\Models\Role;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,6 +49,21 @@ Route::prefix('openid-connect')->name('openid_connect.')->group(function () {
             'access_token' => $keycloakUser->token,
             'refresh_token' => $keycloakUser->refreshToken,
         ]);
+
+        // TODO: remove roles that the user doesn't have anymore!
+        /** @var KeycloakUserRoleExtractor $extractor */
+        $extractor = app()->get(KeycloakUserRoleExtractor::class);
+        $roleNames = $extractor->extractRoles($keycloakUser);
+
+        foreach ($roleNames as $roleName) {
+            try {
+                $role = Role::findByName($roleName);
+            } catch (RoleDoesNotExist $exception) {
+                continue;
+            }
+
+            $user->assignRole($role);
+        }
 
         Auth::login($user);
 
