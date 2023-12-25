@@ -10,11 +10,21 @@
                     <li>
                         <a href="{{ route('logout') }}">Log out</a>
                     </li>
-                    @if(Auth::user()->hasPermissionTo(Permission::ADD_USER))
+                    @can(Permission::APPROVE_USER_REGISTRATION->value)
+                        <li>
+                            <a href="/">Approve user registration</a>
+                        </li>
+                    @endcan
+                    @can(Permission::ADD_USER->value)
                         <li>
                             <a href="/">Add new user</a>
                         </li>
-                    @endif
+                    @endcan
+                    @can(Permission::REMOVE_USER->value)
+                        <li>
+                            <a href="/">Remove user</a>
+                        </li>
+                    @endcan
                 @else
                     <li>
                         <a href="{{ route('login') }}">Log in</a>
