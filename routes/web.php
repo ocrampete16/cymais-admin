@@ -1,5 +1,6 @@
 <?php
 
+use App\KeycloakUser;
 use App\KeycloakUserRoleExtractor;
 use App\Models\User;
 use GuzzleHttp\Exception\ClientException;
@@ -44,6 +45,7 @@ Route::prefix('openid-connect')->name('openid_connect.')->group(function () {
     });
 
     Route::name('callback')->get('/callback', function () {
+        /** @var \SocialiteProviders\Manager\OAuth2\User $keycloakUser */
         $keycloakUser = Socialite::driver('keycloak')->user();
 
         /** @var User $user */
@@ -55,9 +57,7 @@ Route::prefix('openid-connect')->name('openid_connect.')->group(function () {
             'refresh_token' => $keycloakUser->refreshToken,
         ]);
 
-        /** @var KeycloakUserRoleExtractor $extractor */
-        $extractor = app()->get(KeycloakUserRoleExtractor::class);
-        $roleNames = $extractor->extractRoles($keycloakUser);
+        $roleNames = (new KeycloakUser($keycloakUser))->getRoles();
 
         $keycloakRoles = collect($roleNames)
             ->map(fn (string $roleName) => Role::where('name', $roleName)->first())
