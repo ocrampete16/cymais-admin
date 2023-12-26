@@ -104,7 +104,7 @@ services:
         image: quay.io/keycloak/keycloak:23.0.3-0
         command: start-dev
         environment:
-            KEYCLOAK_ADMIN: username
+            KEYCLOAK_ADMIN: admin
             KEYCLOAK_ADMIN_PASSWORD: password
             KC_DB: mysql
             KC_DB_URL_HOST: keycloak-mysql
